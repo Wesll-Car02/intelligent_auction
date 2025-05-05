@@ -1,0 +1,24 @@
+/* frontend/src/index.css */
+/* Add Tailwind directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Optional: Add base styles */
+body {
+    @apply font-sans bg-gray-100 text-gray-800;
+    margin: 0; /* Ensure no default body margin */
+}
+
+/* Style for favorite button */
+.favorite-button {
+    @apply px-3 py-1 text-sm rounded-md transition-colors duration-200 ease-in-out cursor-pointer border;
+}
+
+.favorite-button.favorited {
+    @apply bg-yellow-400 hover:bg-yellow-500 text-yellow-900 border-yellow-500;
+}
+
+.favorite-button.not-favorited {
+    @apply bg-gray-200 hover:bg-gray-300 text-gray-700 border-gray-300;
+}

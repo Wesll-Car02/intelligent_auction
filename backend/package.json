@@ -1,20 +1,21 @@
 {
-  "name": "backend",
+  "name": "leilao-backend",
   "version": "1.0.0",
-  "description": "Backend application for managing properties (imoveis)",
+  "description": "Backend for Leilao Imoveis App",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js"
   },
   "dependencies": {
-    "express": "^4.17.1",
-    "mongoose": "^5.10.9",
-    "dotenv": "^8.2.0"
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "mysql2": "^3.0.0"
   },
   "devDependencies": {
-    "nodemon": "^2.0.4"
+    "nodemon": "^2.0.20"
   },
-  "author": "Your Name",
-  "license": "MIT"
+  "author": "Weslley",
+  "license": "ISC"
 }

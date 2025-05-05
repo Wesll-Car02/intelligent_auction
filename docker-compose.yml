@@ -1,45 +1,76 @@
-version: '3.8'
+# docker-compose.yml (place in the root leilao-app/ directory)
+version: '3.8' # Specify docker-compose version
 
 services:
-  db:
-    image: mariadb:latest
-    environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-    volumes:
-      - db_data:/var/lib/mysql
-    ports:
-      - "3306:3306"
-    networks:
-      - leilao-net
-
+  # Backend Service (Node.js)
   backend:
-    build: ./backend
+    build:
+      context: ./backend # Path to the backend Dockerfile directory
+      dockerfile: Dockerfile
+    container_name: leilao-backend-app
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env # Load environment variables from .env file in backend folder
     ports:
-      - "3000:3000"
-    environment:
-      DB_HOST: db
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_NAME: ${DB_NAME}
-    depends_on:
-      - db
+      - "3001:3001" # Map host port 3001 to container port 3001
+    volumes:
+      # Mount code for development (optional, remove for production)
+      # Be cautious with volumes in production builds
+      - ./backend/src:/app/src
     networks:
-      - leilao-net
+      - leilao-net # Connect to the custom network
+    depends_on:
+      # Optional: Add database service dependency if running DB in Docker
+      - db # Make backend wait for db to be healthy (if db service exists)
 
+  # Frontend Service (React served by Nginx)
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend # Path to the frontend Dockerfile directory
+      dockerfile: Dockerfile
+      args:
+        # Pass the backend URL to the frontend build process
+        # Use the backend service name ('backend') and its internal port (3001)
+        VITE_API_URL: http://localhost:3001/api
+    container_name: leilao-frontend-app
+    restart: unless-stopped
     ports:
-      - "80:80"
+      - "8080:80" # Map host port 8080 to container port 80 (Nginx default)
+    networks:
+      - leilao-net # Connect to the custom network
     depends_on:
-      - backend
+      - backend # Frontend depends on backend being available
+
+  # Optional: MariaDB Service (if you want to run DB in Docker)
+  # Uncomment and configure if needed
+  db:
+    image: mariadb:10.6
+    container_name: leilao-mariadb
+    restart: unless-stopped
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD} # Senha root do .env da raiz
+      MARIADB_DATABASE: ${DB_NAME}               # Nome do DB do backend/.env
+      MARIADB_USER: ${DB_USER}                   # Usuário do DB do backend/.env
+      MARIADB_PASSWORD: ${DB_PASSWORD}           # Senha do DB do backend/.env
+    volumes:
+      - mariadb_data:/var/lib/mysql # Persistir dados do banco
+      # --- MODIFICAÇÃO AQUI ---
+      # Mapeia o script SQL para o diretório de inicialização do MariaDB
+      - ./database/init/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "3307:3306"
     networks:
       - leilao-net
-
-volumes:
-  db_data:
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost", "-u${DB_USER}", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 networks:
   leilao-net:
+    driver: bridge
+
+volumes:
+  mariadb_data:
+    driver: local
